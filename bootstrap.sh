@@ -1,25 +1,26 @@
 #!/bin/bash
 
-MAINREGION=us-east-1
-SECONDARYREGION=ap-southeast-2
+export MAINREGION=us-east-1
+export SECONDARYREGION=ap-southeast-2
 
 wget https://raw.githubusercontent.com/iizotov/aws-tech-summit-lab/main/main.cform
 wget https://raw.githubusercontent.com/iizotov/aws-tech-summit-lab/main/secondary.cform
 
 /usr/local/bin/aws cloudformation deploy \
     --region $MAINREGION \
-    --template-file ./main.cform --stack-name lab-$MAINREGION \
+    --template-file ./main.cform \
+    --stack-name lab-$MAINREGION \
     --capabilities CAPABILITY_IAM \
     --no-cli-pager
 
 # establish EFS replication
-EFSID=$(/usr/local/bin/aws efs describe-file-systems \
+export EFSID=$(/usr/local/bin/aws efs describe-file-systems \
     --region $MAINREGION \
     --max-items 1 \
     --query FileSystems[].FileSystemId \
     --output text)
     
-SECONDARYEFSID=$(/usr/local/bin/aws efs create-replication-configuration \
+export SECONDARYEFSID=$(/usr/local/bin/aws efs create-replication-configuration \
     --region $MAINREGION \
     --source-file-system-id $EFSID \
     --destinations Region=$SECONDARYREGION \
@@ -27,24 +28,24 @@ SECONDARYEFSID=$(/usr/local/bin/aws efs create-replication-configuration \
     --query Destinations[0].FileSystemId \
     --output text)
 
-SECONDARYEFSID=$(/usr/local/bin/aws efs describe-file-systems \
+export SECONDARYEFSID=$(/usr/local/bin/aws efs describe-file-systems \
     --region $SECONDARYREGION \
     --query FileSystems[0].FileSystemId \
     --output text \
     --no-cli-pager)
-GA=$(/usr/local/bin/aws globalaccelerator list-accelerators \
+export GA=$(/usr/local/bin/aws globalaccelerator list-accelerators \
     --region us-west-2 \
     --output text \
     --no-cli-pager \
     --query Accelerators[0].AcceleratorArn)
 
-GADNS=$(/usr/local/bin/aws globalaccelerator list-accelerators \
+export GADNS=$(/usr/local/bin/aws globalaccelerator list-accelerators \
     --region us-west-2 \
     --output text \
     --no-cli-pager \
     --query Accelerators[0].DnsName)
 
-GALISTENER=$(/usr/local/bin/aws globalaccelerator list-listeners \
+export GALISTENER=$(/usr/local/bin/aws globalaccelerator list-listeners \
     --region us-west-2 \
     --accelerator-arn $GA \
     --output text \
@@ -53,7 +54,8 @@ GALISTENER=$(/usr/local/bin/aws globalaccelerator list-listeners \
 # deploy second region
 /usr/local/bin/aws cloudformation deploy \
     --region $SECONDARYREGION \
-    --template-file ./secondary.cform --stack-name lab-$SECONDARYREGION \
+    --template-file ./secondary.cform \
+    --stack-name lab-$SECONDARYREGION \
     --capabilities CAPABILITY_IAM \
     --parameter-overrides EFSFileSystem=$SECONDARYEFSID Listener=$GALISTENER GlobalAcceleratorDns=$GADNS \
     --no-cli-pager
@@ -74,7 +76,7 @@ GALISTENER=$(/usr/local/bin/aws globalaccelerator list-listeners \
     --no-cli-pager
 
 #get a task id in primary region
-ECSTASK=$(/usr/local/bin/aws ecs list-tasks \
+export ECSTASK=$(/usr/local/bin/aws ecs list-tasks \
     --region $MAINREGION \
     --cluster wordpress-ecs-cluster \
     --output text \
@@ -100,13 +102,32 @@ sudo yum install -y session-manager-plugin.rpm
 	--interactive \
     --command "wp --allow-root option update require_name_email 0"
 
+export MAINALB=$(/usr/local/bin/aws cloudformation describe-stacks \
+    --region $MAINREGION \
+    --stack-name lab-$MAINREGION \
+    --query Stacks[0].Outputs[0].OutputValue \
+    --output text)
+
+export SECONDARYALB=$(/usr/local/bin/aws cloudformation describe-stacks \
+    --region $SECONDARYREGION \
+    --stack-name lab-$SECONDARYREGION \
+    --query Stacks[0].Outputs[0].OutputValue \
+    --output text)
+
+curl https://raw.githubusercontent.com/iizotov/aws-tech-summit-lab/main/bootstrap_post.txt -o bootstrap_post.txt
+
+envsubst < ./bootstrap_post.txt > ./post.txt
+
+export POST=$(cat ./post.txt)
+
 /usr/local/bin/aws ecs execute-command \
     --cluster wordpress-ecs-cluster \
 	--region $MAINREGION \
     --task $ECSTASK \
     --container wordpress-container \
 	--interactive \
-    --command "wp --allow-root post create --post_status=publish --user=admin --post_title='Welcome to Tech Summit 2022' --post_content='Try creating comments here and see how it propagates to another region'"
+    --command "wp --allow-root post create --post_status=publish --user=admin --post_excerpt='You have deployed WordPress across two AWS regions: us-east-1 (primary) and ap-southeast-2 (hot read-only standby)... Click for more details' --post_title='(Click Me) Welcome to Tech Summit 2022' --post_content=\"$POST\""
+
 
 /usr/local/bin/aws ecs execute-command \
     --cluster wordpress-ecs-cluster \
