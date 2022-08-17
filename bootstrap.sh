@@ -29,17 +29,21 @@ SECONDARYEFSID=$(/usr/local/bin/aws efs create-replication-configuration \
 
 SECONDARYEFSID=$(/usr/local/bin/aws efs describe-file-systems \
     --region $SECONDARYREGION \
-    --max-items 1 \
-    --query FileSystems[].FileSystemId \
+    --query FileSystems[0].FileSystemId \
     --output text \
     --no-cli-pager)
+GA=$(/usr/local/bin/aws globalaccelerator list-accelerators \
+    --region us-west-2 \
+    --output text \
+    --no-cli-pager \
+    --query Accelerators[0].AcceleratorArn)
 
 # deploy second region
 /usr/local/bin/aws cloudformation deploy \
     --region $SECONDARYREGION \
     --template-file ./secondary.cform --stack-name lab-$SECONDARYREGION \
     --capabilities CAPABILITY_IAM \
-    --parameter-overrides EFSFileSystem=$SECONDARYEFSID \
+    --parameter-overrides EFSFileSystem=$SECONDARYEFSID Listener=$GALISTENER GlobalAcceleratorDns=$GADNS \
     --no-cli-pager
 
 # establish write forwarding
@@ -90,7 +94,7 @@ sudo yum install -y session-manager-plugin.rpm
     --task $ECSTASK \
     --container wordpress-container \
 	--interactive \
-    --command "wp --allow-root post create --post_title='Welcome to Tech Summit 2022' --post_content 'Try creating comments here and see how it propagates to another region'"
+    --command "wp --allow-root post create --post_status=publish --user=admin --post_title='Welcome to Tech Summit 2022' --post_content='Try creating comments here and see how it propagates to another region'"
 
 /usr/local/bin/aws ecs execute-command \
     --cluster wordpress-ecs-cluster \

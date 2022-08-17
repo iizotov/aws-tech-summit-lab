@@ -65,6 +65,10 @@ Parameters:
     Default: supersecretpassword123
   EFSFileSystem:
     Type: String
+  Listener:
+    Type: String
+  GlobalAcceleratorDns:
+    Type: String
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -665,8 +669,21 @@ Resources:
         - !GetAtt RDSCluster.ReadEndpoint.Address
       TTL: 30
       Type: CNAME
+  EndpointGroup:
+    Type: AWS::GlobalAccelerator::EndpointGroup
+    Properties:
+      ListenerArn:
+        Ref: Listener
+      EndpointGroupRegion: !Ref "AWS::Region"
+      TrafficDialPercentage: 0
+      EndpointConfigurations:
+      - EndpointId:
+          Ref: ApplicationLoadBalancer
 Outputs:
   LoadBalancer:
     Description: Load Balancer DNS
     Value: !GetAtt ApplicationLoadBalancer.DNSName
+  GlobalAcceleratorDnsName:
+    Description: Global Accelerator DNS Name
+    Value: !Ref GlobalAcceleratorDns
 

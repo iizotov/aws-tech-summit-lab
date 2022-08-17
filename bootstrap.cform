@@ -69,4 +69,51 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet1
 
-Outputs:
+  RootRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+  RootInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref RootRole
+  BootstrapInstance: 
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: t3.large
+      IamInstanceProfile: !Ref RootInstanceProfile
+      ImageId: 'ami-0c641f2290e9cd048'
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref PublicSubnet1
+      UserData:
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash
+            
+            /bin/curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            /bin/unzip awscliv2.zip
+            ./aws/install
+            /bin/wget https://raw.githubusercontent.com/iizotov/aws-tech-summit-lab/main/bootstrap.sh
+            /bin/bash ./bootstrap.sh
+            /sbin/poweroff 
