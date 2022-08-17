@@ -5,9 +5,10 @@ As the criticality of workloads our customers deploy to AWS increases, it's not 
 
 These workloads will rarely be deployed active-active across two AWS regions - far from every system can tolerate the latency and eventual consistency; the majority of multi-region deployments  follow a more traditional DR set of ideas. Yet we see customers misdesigning their approach to cross-region disaster recovery, especially - and you will see this from today's lab - if it involves complex choreography across multiple services. 
 
-# What have we deployed
+# What is deployed
 
-> INSERT DIAGRAM HERE
+![](img/diagram-draft.png)
+> INSERT PROPER DIAGRAM HERE
 
 Good old WordPress! In fact, we picked WordPress to demonstrate some of our customers' pain - it's quite representative of the typical systems our larger customers are dealing with: a) it requires a relational backend and a shared filesystem b) it lends itself nicely to containerisation. 
 
@@ -52,7 +53,7 @@ To ensure a single global point of entry, we use [Global Accelerator](https://aw
  If you know your way around WordPress, you can append `/wp-admin/` to the endpoint and log in using `admin` / `TechSummit2022` and create new posts.
 
 # Goal
-Looking at this environment, design and execute a fail-over.Clearly it involves a) failing over the Aurora Global Database to ap-southeast-2 b) Failing over EFS replication to ap-southeast-2 c) modifying the database endpoint in the secondary site and d) changing distribution weights in the Global Accelerator Endpoint and ... a few other things - I'll let you figure them out.
+Looking at this environment, design and execute a fail-over. Clearly it involves a) failing over the Aurora Global Database to ap-southeast-2 b) Failing over EFS replication to ap-southeast-2 c) modifying the database endpoint in the secondary site and d) changing distribution weights in the Global Accelerator Endpoint and ... a few other things - I'll let you figure them out.
 
 Oh yes, it all sounds great in theory, but this particular customer is ultra concerned that the last time they tried failing out of us-east-1 during the [December 2021 Event](https://aws.amazon.com/message/12721/), none of it worked. They cited that during the LSE, *'Route 53 APIs were impaired from 7:30 AM PST until 2:30 PM PST preventing customers from making changes to their DNS entries'* and this was partly the reason why they introduced Global Accelerator to the architecture since December.
 
