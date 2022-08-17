@@ -58,3 +58,5 @@ Looking at this environment, design and execute a fail-over. Clearly it involves
 Oh yes, it all sounds great in theory, but this particular customer is ultra concerned that the last time they tried failing out of us-east-1 during the [December 2021 Event](https://aws.amazon.com/message/12721/), none of it worked. They cited that during the LSE, *'Route 53 APIs were impaired from 7:30 AM PST until 2:30 PM PST preventing customers from making changes to their DNS entries'* and this was partly the reason why they introduced Global Accelerator to the architecture since December.
 
 Oh, and the customer's architect keeps repeating that they need to *'Rely on the data plane and not the control plane during recovery'*. You googled it and [discovered this is a new best practice](https://docs.aws.amazon.com/wellarchitected/latest/framework/a-failure-management.html#:~:text=Rely%20on%20the,it%20for%20recovery.) in the Reliability Pillar of the Well-Architected Framework. Go figure.
+
+Oh and one more thing - they want to know how they can do it without relying on the console as they could not access it during the last LSE either :(.
