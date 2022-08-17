@@ -38,6 +38,18 @@ GA=$(/usr/local/bin/aws globalaccelerator list-accelerators \
     --no-cli-pager \
     --query Accelerators[0].AcceleratorArn)
 
+GADNS=$(/usr/local/bin/aws globalaccelerator list-accelerators \
+    --region us-west-2 \
+    --output text \
+    --no-cli-pager \
+    --query Accelerators[0].DnsName)
+
+GALISTENER=$(/usr/local/bin/aws globalaccelerator list-listeners \
+    --region us-west-2 \
+    --accelerator-arn $GA \
+    --output text \
+    --no-cli-pager \
+    --query Listeners[0].ListenerArn)    
 # deploy second region
 /usr/local/bin/aws cloudformation deploy \
     --region $SECONDARYREGION \
