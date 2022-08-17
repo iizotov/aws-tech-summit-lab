@@ -1,0 +1,14 @@
+So, you have deployed WordPress across two AWS regions: us-east-1 (primary) and ap-southeast-2 (read-only hot standby) running on ECS/Fargate. 
+
+<br><br> ALB for primary site: <a href='http://$MAINALB/'>http://$MAINALB</a> 
+<br><br> ALB for secondary site: <a href='http://$SECONDARYALB/'>http://$SECONDARYALB/</a> 
+
+<br><br> You also gave a Global Accelerator endpoint: <a href=http://$GADNS/'>http://$GADNS</a> with 100% of traffic going to the primary site and 0% of traffic going to the secondary site. 
+
+<br><br>First, try creating comments using the US deployment and see how they propagate to the secondary deployment and also check that the secondary deployment is indeed read-only 
+
+<br><br> Now, we need to design a fail-over process which involves a) failing over the Aurora Global Database b) Failing over EFS global replication c) modifying the database endpoint in the secondary site and d) modifying the Global Accelerator endpoint. 
+
+<br><br> It all sounds great in theory, but your customer is concerned that the last time they tried failing out of us-east-1 during the December 2021 LSE, none of it worked.
+
+<br><br>More information: <a href='https://github.com/iizotov/aws-tech-summit-lab'>https://github.com/iizotov/aws-tech-summit-lab</a>
