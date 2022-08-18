@@ -365,7 +365,7 @@ Now, let's create a R53 healcheck. Go to the [Route53 Healthcheck console](https
 
 Now let's go back to Route53 and edit the existing record for `db.wordpress.lan`, making it a secondary record in a failover pair:
 
-<img src="img/r53-phz-seconfary.png" width="500">
+<img src="img/r53-phz-seconfary.png" width="400">
 
 Let's add another record pointing to Aurora's inactive RW endpoint as the primary record in the R53 failover pair, using the R53 healcheck we just created:
 
