@@ -329,3 +329,59 @@ okay, here we go.
 .
 
 solution here
+
+## Failing over Aurora
+First of all, to reduce reliance on the AWS Control Plane for recovery we need to leverage health check whenever possible. Route 53 Private Hosted Zone in ap-southeast-2 is the first one we need to update. Go to the [Route53 Hosted Zones console](https://us-east-1.console.aws.amazon.com/route53/v2/hostedzones#) and locate the hosted zone for ap-southeast-2
+
+Currently we have a simple CNAME record for `db.wordpress.lan` that - if you look carefully - points to Aurora's read only endpoint in Sydney.
+![](img/r53-phz-chame.png)
+
+Why the read only endpoint? Let's go to [the RDS Console](https://ap-southeast-2.console.aws.amazon.com/rds/home?region=ap-southeast-2#database:id=secondary-aurora-cluster;is-cluster=true). Notice that the writer endpoint is inactive because Aurora in ap-southeast-2 is a 'mirror' of the Aurora in us-east-1:
+![](img/Aurora-ro.png)
+
+So, as part of our Aurora failover we need to repoint the `db.wordpress.lan` to the Aurora writer endpoint... but this is a control plane call. How do we avoid it? Let's see if we can use R53 healthchecks. 
+
+First, we need to create a CloudWatch alarm to be able to tell when the database is failed over to Sydney. With a siple threshold of EngineUptime <= 0 for role *WRITER* we will be able to reliably detect if we have writers in ap-southeast-2. Also specify 'Treat missing data as bad'.
+
+Initially, the alarm will be active as there are no Aurora writers in Sydney:
+![](img/cw-alarm.png)
+![](img/cw-alarm-2.png)
+
+
+Now, let's create a R53 healcheck. Go to the [Route53 Healthcheck console](https://us-east-1.console.aws.amazon.com/route53/healthchecks/home#/) and configure the R53 Healthcheck to use the CloudWatch alarm we've just created:
+![](img/r53-healthcheck.png)
+
+Now let's go back to Route53 and edit the existing record for `db.wordpress.lan`, making it a secondary record in a failover pair:
+![](img/r53-phz-seconfary.png)
+
+Let's add another record pointing to Aurora's inactive RW endpoint as the primary record in the R53 failover pair, using the R53 healcheck we just created:
+![](img/r53-phz-primary.png)
+
+In the end, we will have something like this:
+![](img/r53-result.png). What this give us is the ability to automatically rewrite the `db.wordpress.lan` record without involving any Route53 Control Plane calls.
+
+Let's now failover Aurora to Sydney. Go to the [RDS Console](https://ap-southeast-2.console.aws.amazon.com/rds/home?region=ap-southeast-2#databases:), and initiate the failover to ap-southeast-2:
+![](img/aurora-failover.png).
+
+> Keep in mind that in case there is Control Plane impairment in us-east-1, you can simply remove the secondary cluster from the global cluster, achieving a similar outcome
+
+In a few minutes you should see your cloudwatch alarm and R53 healthcheck go healthy and `db.wordpress.lan` will be repointed to the Aurora writer endpoint in sydney.
+
+## Failing over EFS
+Now, remember - EFS is replicated from us-east-1 to ap-southeast-2 where it's read-only. In order to make it writeable we simply need to break the replication. [Go to the EFS Console in ap-southeast-2](https://ap-southeast-2.console.aws.amazon.com/efs/home?region=ap-southeast-2#/file-systems) and click on the EFS file system. Notice the following warning:
+![](img/efs-ro.png)
+
+Delete replication by going to the Replication tab and clicking 'Delete replication':
+![](img/efs-delete-replication.png)
+
+## Failing over Global Accelerator
+Go to the [GA Console](https://us-west-2.console.aws.amazon.com/globalaccelerator/home?region=ap-southeast-2#GlobalAcceleratorDashboard:) and click on the Global Accelerator. Scroll down and click on the listener:
+![](img/ga-listener.png)
+
+Adjust the weights so that ap-southeast-2 receives 100% of all traffic:
+![](img/ga-rebalance.png)
+
+Test using the GA endpoint and the two regional ALB endpoints.
+
+By the way, can you guess why the us-east-1 instance is returning an error now?
+![](img/iad-error.png)

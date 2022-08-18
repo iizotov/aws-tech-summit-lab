@@ -672,7 +672,7 @@ Resources:
     Type: "AWS::Route53::HostedZone"
     Properties: 
       HostedZoneConfig: 
-        Comment: 'Hosted zone for wordpress'
+        Comment: 'Hosted zone for us-east-1'
       Name: 'wordpress.lan'
       VPCs: 
         - 
