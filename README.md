@@ -355,8 +355,8 @@ First, we need to create a CloudWatch alarm to be able to tell when the database
 
 Initially, the alarm will be active as there are no Aurora writers in Sydney:
 
-<img src="img/cw-alarm.png" width="400">
-<img src="img/cw-alarm-2.png" width="400">
+<img src="img/cw-alarm.png">
+<img src="img/cw-alarm-2.png" >
 
 
 Now, let's create a R53 healcheck. Go to the [Route53 Healthcheck console](https://us-east-1.console.aws.amazon.com/route53/healthchecks/home#/) and configure the R53 Healthcheck to use the CloudWatch alarm we've just created:
@@ -365,7 +365,7 @@ Now, let's create a R53 healcheck. Go to the [Route53 Healthcheck console](https
 
 Now let's go back to Route53 and edit the existing record for `db.wordpress.lan`, making it a secondary record in a failover pair:
 
-<img src="img/r53-phz-seconfary.png" width="200">
+<img src="img/r53-phz-seconfary.png" width="500">
 
 Let's add another record pointing to Aurora's inactive RW endpoint as the primary record in the R53 failover pair, using the R53 healcheck we just created:
 
