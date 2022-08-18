@@ -385,3 +385,5 @@ Test using the GA endpoint and the two regional ALB endpoints.
 
 By the way, can you guess why the us-east-1 instance is returning an error now?
 ![](img/iad-error.png)
+
+We still had to make a few control plane calls - for example, Aurora failover was one and EFS delete mirror was another. What's important here is that they were all run out of the ap-southeast-2 region. We completely avoided having dependency on the global control plane of Route53.
