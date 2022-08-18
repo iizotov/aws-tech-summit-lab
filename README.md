@@ -7,7 +7,7 @@ These workloads will rarely be deployed active-active across two AWS regions - f
 
 # What is deployed
 
-<img src="img/diagram-draft.png" width="500">
+<img src="img/diagram-draft.png" width="800">
 
 > INSERT PROPER DIAGRAM HERE
 
@@ -28,32 +28,32 @@ To ensure a single global point of entry, we use [Global Accelerator](https://aw
 # Start Event
 1. Go to https://dashboard.eventengine.run/ and enter the event hash provided by the organisers
 
-    <img src="img/ee.png" width="500">
+    <img src="img/ee.png" width="800">
 
 2. Sign in as Amazon Employee
 
-    <img src="img/otp.png" width="500">
+    <img src="img/otp.png" width="800">
 
 3. On Team Dashboard, click AWS Console. Make sure you're in us-east-1
 
-    <img src="img/teamdash.png" width="500">
+    <img src="img/teamdash.png" width="800">
 
 # Validate your environment
 1. Go to the [us-east-1 Cloudformation console](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks?filteringStatus=active&filteringText=&viewNested=true&hideStacks=false) and grab the outputs of the `lab-us-east-1` stack). These will be the Global Accelerator endpoint and the regional ALB endpoint for the primary deployment:
 
-    <img src="img/iad-cfn.png" width="500">
+    <img src="img/iad-cfn.png" width="800">
 
 2. Repeat the same for ap-southeast-2 - use the `lab-ap-southeast-2` stack. You'll get the same Global Accelerator endpoint and the regional ALB endpoint for the read-only hot standby deployment:
 
-    <img src="img/syd-cfn.png" width="500">
+    <img src="img/syd-cfn.png" width="800">
 
 3. Open two browser windows using the ALB endpoints. Try creating a comment under the "Welcome to Tech Summit 2022" post using the us-east-1 deployment and see how it propagates to the secondary ap-southeast-2 deployment:
 
-    <img src="img/iad-comment.png" width="500">
+    <img src="img/iad-comment.png" width="800">
 
 4. Try doing the same from the secondary deployment and you'll get an error as its database and filesystem are read-only:
 
-    <img src="img/syd-comment.png" width="500">
+    <img src="img/syd-comment.png" width="800">
 
 
 >If this isn't working as expected - there's an issue with your environment. Talk to a facilitator before proceeding.
@@ -343,11 +343,11 @@ First of all, to reduce reliance on the AWS Control Plane for recovery we need t
 
 Currently we have a simple CNAME record for `db.wordpress.lan` that - if you look carefully - points to Aurora's read only endpoint in Sydney.
 
-<img src="img/r53-phz-chame.png" width="500">
+<img src="img/r53-phz-chame.png" width="800">
 
 Why the read only endpoint? Let's go to [the RDS Console](https://ap-southeast-2.console.aws.amazon.com/rds/home?region=ap-southeast-2#database:id=secondary-aurora-cluster;is-cluster=true). Notice that the writer endpoint is inactive because Aurora in ap-southeast-2 is a 'mirror' of the Aurora in us-east-1:
 
-<img src="img/Aurora-ro.png" width="500">
+<img src="img/Aurora-ro.png" width="800">
 
 So, as part of our Aurora failover we need to repoint the `db.wordpress.lan` to the Aurora writer endpoint... but this is a control plane call. How do we avoid it? Let's see if we can use R53 healthchecks. 
 
@@ -361,7 +361,7 @@ Initially, the alarm will be active as there are no Aurora writers in Sydney:
 
 Now, let's create a R53 healcheck. Go to the [Route53 Healthcheck console](https://us-east-1.console.aws.amazon.com/route53/healthchecks/home#/) and configure the R53 Healthcheck to use the CloudWatch alarm we've just created:
 
-<img src="img/r53-healthcheck.png" width="500">
+<img src="img/r53-healthcheck.png" width="800">
 
 Now let's go back to Route53 and edit the existing record for `db.wordpress.lan`, making it a secondary record in a failover pair:
 
@@ -369,17 +369,17 @@ Now let's go back to Route53 and edit the existing record for `db.wordpress.lan`
 
 Let's add another record pointing to Aurora's inactive RW endpoint as the primary record in the R53 failover pair, using the R53 healcheck we just created:
 
-<img src="img/r53-phz-primary.png" width="500">
+<img src="img/r53-phz-primary.png" width="800">
 
 In the end, we will have something like this:
 
-<img src="img/r53-result.png" width="500"> 
+<img src="img/r53-result.png" width="800"> 
 
 What this give us is the ability to automatically rewrite the `db.wordpress.lan` record without involving any Route53 Control Plane calls.
 
 Let's now failover Aurora to Sydney. Go to the [RDS Console](https://ap-southeast-2.console.aws.amazon.com/rds/home?region=ap-southeast-2#databases:), and initiate the failover to ap-southeast-2:
 
-<img src="img/aurora-failover.png" width="500">.
+<img src="img/aurora-failover.png" width="800">.
 
 > Keep in mind that in case there is Control Plane impairment in us-east-1, you can simply remove the secondary cluster from the global cluster, achieving a similar outcome
 
@@ -387,25 +387,25 @@ In a few minutes you should see your cloudwatch alarm and R53 healthcheck go hea
 
 ## Failing over EFS
 Now, remember - EFS is replicated from us-east-1 to ap-southeast-2 where it's read-only. In order to make it writeable we simply need to break the replication. [Go to the EFS Console in ap-southeast-2](https://ap-southeast-2.console.aws.amazon.com/efs/home?region=ap-southeast-2#/file-systems) and click on the EFS file system. Notice the following warning:
-<img src="img/efs-ro.png" width="500">
+<img src="img/efs-ro.png" width="800">
 
 Delete replication by going to the Replication tab and clicking 'Delete replication':
 
-<img src="img/efs-delete-replication.png" width="500">
+<img src="img/efs-delete-replication.png" width="800">
 
 ## Failing over Global Accelerator
 Go to the [GA Console](https://us-west-2.console.aws.amazon.com/globalaccelerator/home?region=ap-southeast-2#GlobalAcceleratorDashboard:) and click on the Global Accelerator. Scroll down and click on the listener:
 
-<img src="img/ga-listener.png" width="500">
+<img src="img/ga-listener.png" width="800">
 
 Adjust the weights so that ap-southeast-2 receives 100% of all traffic:
 
-<img src="img/ga-rebalance.png" width="500">
+<img src="img/ga-rebalance.png" width="800">
 
 Test using the GA endpoint and the two regional ALB endpoints.
 
 By the way, can you guess why the us-east-1 instance is returning an error now?
 
-<img src="img/iad-error.png" width="500">
+<img src="img/iad-error.png" width="800">
 
 We still had to make a few control plane calls - for example, Aurora failover was one and EFS delete mirror was another. What's important here is that they were all run out of the ap-southeast-2 region. We completely avoided having dependency on the global control plane of Route53.
