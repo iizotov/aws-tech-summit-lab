@@ -123,6 +123,7 @@ Oh and one more thing - they want to know how they can do it without relying on 
 .
 
 Have you actually tried finding a solution yourself?
+
 .
 
 .
@@ -196,6 +197,7 @@ Have you actually tried finding a solution yourself?
 .
 
 you are persistent! 
+
 .
 
 .
@@ -233,6 +235,7 @@ you are persistent!
 .
 
 okay, here we go.
+
 .
 
 .
@@ -294,6 +297,7 @@ okay, here we go.
 .
 
 (ok, I was joking just now. a bit more)
+
 .
 
 .
