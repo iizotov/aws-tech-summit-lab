@@ -398,6 +398,14 @@ Delete the replication by going to the Replication tab and clicking 'Delete repl
 
 <img src="img/efs-delete-replication.png" >
 
+Extension:
+
+How would you automate this, such that it occurs at the same time as the Route53 failover?
+
+Implementation this automation.
+
+How would you fail-back EFS?
+
 ## Failing over Global Accelerator (GA)
 Go to the [GA Console](https://us-west-2.console.aws.amazon.com/globalaccelerator/home?region=ap-southeast-2#GlobalAcceleratorDashboard:) and click on the Global Accelerator. Scroll down and click on the listener:
 
