@@ -398,13 +398,15 @@ Delete the replication by going to the Replication tab and clicking 'Delete repl
 
 <img src="img/efs-delete-replication.png" >
 
-Extension:
+### Extension:
 
 How would you automate this, such that it occurs at the same time as the Route53 failover?
 
+Which regions would you run this automation in?
+
 Implementation this automation.
 
-How would you fail-back EFS?
+How would you implement the fail-back of EFS after the DR event?
 
 ## Failing over Global Accelerator (GA)
 Go to the [GA Console](https://us-west-2.console.aws.amazon.com/globalaccelerator/home?region=ap-southeast-2#GlobalAcceleratorDashboard:) and click on the Global Accelerator. Scroll down and click on the listener:
@@ -421,8 +423,16 @@ By the way, can you guess why the N.Virginia instance is returning an error now?
 
 <img src="img/iad-error.png" >
 
+## Conclusion
+
 We still had to make a few control plane calls - for example, Aurora failover was one and EFS delete mirror was another. What's important here is that they were all run out of the Sydney region. We completely avoided having dependency on the global control plane of Route53 or on the N.Virginia region we're failing out of.
 
-Of course, we click-ops'ed our way through it - I'm curious to hear how would you go about automating it - and which region will you run this automation out of.
+Of course, we click-ops'ed our way through it.
+
+Before you finish - write down your answers to the following and email to your facilitator:
+* How would you go about automating it - and which region will you run this automation out of?
+* How would you recover back to the primary region with minimal risk? Will this happen automatically, or with a manual trigger?
+* What playbooks are required?
+* What sections & questions in the Well Architected Review have we covered in this exercise?
 
 Thanks for your time!
