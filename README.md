@@ -383,6 +383,13 @@ Let's now failover Aurora to Sydney. Go to the [RDS Console](https://ap-southeas
 
 In a few minutes you should see the cloudwatch alarm and the Route53 healthcheck go healthy and `db.wordpress.lan` will be repointed to the Aurora writer endpoint in Sydney.
 
+Test out your wordpress endpoints.
+
+Which ones work?
+
+Is there anything else that should be changed to allow testing of the other site before failback?
+
+
 ## Failing over EFS
 Now, remember - EFS is replicated from N.Virginia to Sydney (where it's read-only). In order to make it writeable we simply need to break the replication. [Go to the EFS Console in Sydney](https://ap-southeast-2.console.aws.amazon.com/efs/home?region=ap-southeast-2#/file-systems) and click on the EFS file system. Notice the following warning:
 <img src="img/efs-ro.png" >
