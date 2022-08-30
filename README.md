@@ -339,7 +339,7 @@ solution here
 ## Failing over Aurora
 First of all, to reduce reliance on the AWS Control Plane for recovery we need to leverage health checks whenever possible. Route 53 Private Hosted Zone in Sydney is the first one we need to update. Go to the [Route53 Hosted Zones console](https://us-east-1.console.aws.amazon.com/route53/v2/hostedzones#) and locate the hosted zone for Sydney.
 
-Currently we have a simple CNAME record for `db.wordpress.lan` that - if you look carefully - points to Aurora's read only endpoint in Sydney.
+Currently we have a CNAME record for `db.wordpress.lan` that - if you look carefully - points to Aurora's read only endpoint in Sydney and uses a "Simple routing" policy.
 
 <img src="img/r53-phz-chame.png" >
 
@@ -349,7 +349,7 @@ Why the read only endpoint? Let's go to [the RDS Console](https://ap-southeast-2
 
 So, as part of our Aurora failover we need to repoint the `db.wordpress.lan` to the Aurora writer endpoint... but this is a control plane call. How do we avoid it? Let's see if we can wire in Route53 healthchecks to make it happen automatically. 
 
-First, we need to create a CloudWatch alarm to be able to tell when the database is failed over to Sydney. With a simple threshold of EngineUptime <= 0 for role *WRITER* we will be able to reliably detect if we have writers in Sydney. Also specify 'Treat missing data as bad'.
+First, we need to create a CloudWatch alarm to be able to tell when the database is failed over to Sydney. With a threshold of EngineUptime <= 0 for role *WRITER* we will be able to reliably detect if we have writers in Sydney. Also specify 'Treat missing data as bad'.
 
 Initially, the alarm will be active as there are no Aurora writers in Sydney:
 
