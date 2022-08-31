@@ -361,6 +361,17 @@ Now, let's create a Route53 healcheck. Go to the [Route53 Healthcheck console](h
 
 <img src="img/r53-healthcheck.png" >
 
+Before you hit save - one more thing needs to be updated.
+
+Have a read of [How Route 53 determinntes the status of health checks that monitor CloudWatch alarms](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-determining-health-of-endpoints.html#dns-failover-determining-health-of-endpoints-cloudwatch).  
+
+* Which other option needs to be changed?   
+
+Set it and see what happens.  If you get it wrong, you can edit it again afterwards.
+
+What state do you expect the Health Check to be in?   Is it in that state?
+
+
 Now let's go back to Route53 and edit the existing record for `db.wordpress.lan`, making it a secondary record in a failover pair:
 
 <img src="img/r53-phz-seconfary.png" width="400">
