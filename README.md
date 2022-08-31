@@ -363,7 +363,7 @@ Now, let's create a Route53 healcheck. Go to the [Route53 Healthcheck console](h
 
 Before you hit save - one more thing needs to be updated.
 
-Have a read of [How Route 53 determinntes the status of health checks that monitor CloudWatch alarms](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-determining-health-of-endpoints.html#dns-failover-determining-health-of-endpoints-cloudwatch).  
+Have a read of [How Route 53 determines the status of health checks that monitor CloudWatch alarms](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-determining-health-of-endpoints.html#dns-failover-determining-health-of-endpoints-cloudwatch).  
 
 * Which other option needs to be changed?   
 
