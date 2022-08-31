@@ -339,7 +339,7 @@ solution here
 ## Failing over Aurora
 First of all, to reduce reliance on the AWS Control Plane for recovery we need to leverage health checks whenever possible. Route 53 Private Hosted Zone in Sydney is the first one we need to update. Go to the [Route53 Hosted Zones console](https://us-east-1.console.aws.amazon.com/route53/v2/hostedzones#) and locate the hosted zone for Sydney.
 
-Currently we have a simple CNAME record for `db.wordpress.lan` that - if you look carefully - points to Aurora's read only endpoint in Sydney.
+Currently we have a CNAME record for `db.wordpress.lan` that - if you look carefully - points to Aurora's read only endpoint in Sydney and uses a "Simple routing" policy.
 
 <img src="img/r53-phz-chame.png" >
 
@@ -349,7 +349,7 @@ Why the read only endpoint? Let's go to [the RDS Console](https://ap-southeast-2
 
 So, as part of our Aurora failover we need to repoint the `db.wordpress.lan` to the Aurora writer endpoint... but this is a control plane call. How do we avoid it? Let's see if we can wire in Route53 healthchecks to make it happen automatically. 
 
-First, we need to create a CloudWatch alarm to be able to tell when the database is failed over to Sydney. With a siple threshold of EngineUptime <= 0 for role *WRITER* we will be able to reliably detect if we have writers in Sydney. Also specify 'Treat missing data as bad'.
+First, we need to create a CloudWatch alarm to be able to tell when the database is failed over to Sydney. With a threshold of EngineUptime <= 0 for role *WRITER* we will be able to reliably detect if we have writers in Sydney. Also specify 'Treat missing data as bad'.
 
 Initially, the alarm will be active as there are no Aurora writers in Sydney:
 
@@ -360,6 +360,17 @@ Initially, the alarm will be active as there are no Aurora writers in Sydney:
 Now, let's create a Route53 healcheck. Go to the [Route53 Healthcheck console](https://us-east-1.console.aws.amazon.com/route53/healthchecks/home#/) and configure the Route53 healthcheck to use the CloudWatch alarm we've just created:
 
 <img src="img/r53-healthcheck.png" >
+
+Before you hit save - one more thing needs to be updated.
+
+Have a read of [How Route 53 determinntes the status of health checks that monitor CloudWatch alarms](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-determining-health-of-endpoints.html#dns-failover-determining-health-of-endpoints-cloudwatch).  
+
+* Which other option needs to be changed?   
+
+Set it and see what happens.  If you get it wrong, you can edit it again afterwards.
+
+What state do you expect the Health Check to be in?   Is it in that state?
+
 
 Now let's go back to Route53 and edit the existing record for `db.wordpress.lan`, making it a secondary record in a failover pair:
 
@@ -383,6 +394,13 @@ Let's now failover Aurora to Sydney. Go to the [RDS Console](https://ap-southeas
 
 In a few minutes you should see the cloudwatch alarm and the Route53 healthcheck go healthy and `db.wordpress.lan` will be repointed to the Aurora writer endpoint in Sydney.
 
+Test out your wordpress endpoints.
+
+Which ones work?
+
+Is there anything else that should be changed to allow testing of the other site before failback?
+
+
 ## Failing over EFS
 Now, remember - EFS is replicated from N.Virginia to Sydney (where it's read-only). In order to make it writeable we simply need to break the replication. [Go to the EFS Console in Sydney](https://ap-southeast-2.console.aws.amazon.com/efs/home?region=ap-southeast-2#/file-systems) and click on the EFS file system. Notice the following warning:
 <img src="img/efs-ro.png" >
@@ -390,6 +408,13 @@ Now, remember - EFS is replicated from N.Virginia to Sydney (where it's read-onl
 Delete the replication by going to the Replication tab and clicking 'Delete replication':
 
 <img src="img/efs-delete-replication.png" >
+
+### Extension:
+
+* How would you automate this, such that it occurs at the same time as the Route53 failover?
+* Which regions would you run this automation in?
+* Implementation this automation.
+* How would you implement the fail-back of EFS after the DR event?
 
 ## Failing over Global Accelerator (GA)
 Go to the [GA Console](https://us-west-2.console.aws.amazon.com/globalaccelerator/home?region=ap-southeast-2#GlobalAcceleratorDashboard:) and click on the Global Accelerator. Scroll down and click on the listener:
@@ -406,8 +431,16 @@ By the way, can you guess why the N.Virginia instance is returning an error now?
 
 <img src="img/iad-error.png" >
 
+## Conclusion
+
 We still had to make a few control plane calls - for example, Aurora failover was one and EFS delete mirror was another. What's important here is that they were all run out of the Sydney region. We completely avoided having dependency on the global control plane of Route53 or on the N.Virginia region we're failing out of.
 
-Of course, we click-ops'ed our way through it - I'm curious to hear how would you go about automating it - and which region will you run this automation out of.
+Of course, we click-ops'ed our way through it.
+
+Before you finish - write down your answers to the following and email to your facilitator:
+* How would you go about automating it - and which region will you run this automation out of?
+* How would you recover back to the primary region with minimal risk? Will this happen automatically, or with a manual trigger?
+* What playbooks are required?
+* What sections & questions in the Well Architected Review have we covered in this exercise?
 
 Thanks for your time!
